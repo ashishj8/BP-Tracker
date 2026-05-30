@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>BP Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,300&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#0c0f1a;--surface:#131929;--surface2:#1a2235;--border:#243048;--red:#e8364a;--red2:#b91c30;--text:#e8edf5;--muted:#4a5a78;--subtle:#8899bb;--mono:'DM Mono',monospace;--serif:'Fraunces',Georgia,serif}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;-webkit-tap-highlight-color:transparent}
+.app{max-width:430px;margin:0 auto;padding:20px 16px 60px}
+.hdr{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.hdr-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--red),var(--red2));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 4px 20px #e8364a44}
+.hdr-title{font-family:var(--serif);font-size:24px;font-weight:700;letter-spacing:-.5px}
+.hdr-sub{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.status{border-radius:10px;padding:9px 14px;font-size:12px;font-weight:500;margin-bottom:14px;line-height:1.4;display:flex;align-items:center;gap:8px}
+.status.info{background:#1a2d4a;color:#7ab3f5;border:1px solid #1e3a6a}
+.status.ok{background:#142a1f;color:#4ade80;border:1px solid #1a3d28}
+.status.error{background:#2a1418;color:#f87171;border:1px solid #3d1a1e}
+.status.warn{background:#2a2010;color:#fbbf24;border:1px solid #3d3010}
+.retry-btn{margin-left:auto;background:var(--red);color:#fff;border:none;border-radius:6px;padding:3px 12px;font-size:11px;font-family:var(--mono);font-weight:500;cursor:pointer}
+.tabs{display:flex;gap:8px;margin-bottom:20px}
+.tab{flex:1;padding:10px;border:1px solid var(--border);border-radius:12px;background:transparent;color:var(--muted);font-family:var(--mono);font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;letter-spacing:.5px}
+.tab.on{background:var(--red);border-color:var(--red);color:#fff}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px}
+.card-title{font-size:11px;color:var(--subtle);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px}
+.photo-row{display:flex;gap:10px;margin-bottom:12px}
+.photo-label{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 8px;background:var(--surface2);border:1px dashed var(--border);border-radius:12px;cursor:pointer}
+.photo-label input{display:none}
+.photo-icon{font-size:28px}
+.photo-text{font-size:11px;color:var(--subtle);letter-spacing:.5px}
+.preview-wrap{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--border);margin-bottom:10px}
+.preview-img{width:100%;display:block;max-height:200px;object-fit:contain;background:#000}
+.scan-overlay{position:absolute;inset:0;background:#000b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.scan-text{font-size:12px;color:#fff}
+.conf-badge{position:absolute;top:8px;right:8px;padding:3px 10px;border-radius:20px;color:#fff;font-size:11px;font-weight:500}
+.scan-msg{font-size:12px;margin-top:6px;font-weight:500}
+.divider{display:flex;align-items:center;gap:10px;margin:4px 0}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.divider span{font-size:10px;color:var(--muted);white-space:nowrap;letter-spacing:1px;text-transform:uppercase}
+.bp-display{display:flex;align-items:center;justify-content:center;gap:16px;padding:16px 0 8px}
+.bp-num{display:flex;flex-direction:column;align-items:center}
+.bp-val{font-family:var(--serif);font-size:54px;font-weight:700;color:var(--text);line-height:1;letter-spacing:-3px}
+.bp-val.placeholder{color:var(--muted)}
+.bp-unit{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:3px}
+.bp-slash{font-family:var(--serif);font-size:44px;color:var(--border)}
+.cat-badge{text-align:center;padding:6px 18px;border-radius:24px;font-size:12px;font-weight:500;letter-spacing:.5px;display:none;margin:0 auto 4px}
+.row3{display:flex;gap:8px}
+.row2{display:flex;gap:10px}
+.ig{flex:1;display:flex;flex-direction:column;gap:5px}
+.lbl{font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase}
+.num-input{background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--serif);font-size:22px;font-weight:700;padding:10px 6px;text-align:center;outline:none;width:100%;transition:border-color .2s}
+.num-input:focus{border-color:var(--red)}
+.dt-input{background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:12px;padding:10px 8px;outline:none;width:100%;transition:border-color .2s;color-scheme:dark}
+.dt-input:focus{border-color:var(--red)}
+.textarea{background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--subtle);font-family:var(--mono);font-size:12px;padding:10px 12px;outline:none;width:100%;resize:none;transition:border-color .2s;line-height:1.5}
+.textarea:focus{border-color:var(--red)}
+.save-btn{width:100%;padding:16px;background:linear-gradient(135deg,var(--red),var(--red2));color:#fff;border:none;border-radius:14px;font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:1px;cursor:pointer;box-shadow:0 4px 24px #e8364a33;transition:opacity .2s,transform .1s}
+.save-btn:active{transform:scale(.98)}
+.save-btn:disabled{opacity:.45;cursor:not-allowed}
+.ref-box{background:var(--bg);border-radius:12px;padding:12px 14px;border:1px solid var(--surface2)}
+.ref-title{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.ref-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.ref-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ref-label{font-size:11px;color:var(--subtle);width:72px}
+.ref-range{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.stats-row{display:flex;gap:10px;margin-bottom:12px}
+.stat-box{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center}
+.stat-val{display:block;font-family:var(--serif);font-size:24px;font-weight:700;color:var(--text);letter-spacing:-1px}
+.stat-lbl{display:block;font-size:9px;color:var(--muted);margin-top:3px;letter-spacing:2px;text-transform:uppercase}
+.entry-list{display:flex;flex-direction:column;gap:8px}
+.entry{background:var(--surface);border:1px solid var(--border);border-radius:14px;display:flex;overflow:hidden}
+.entry-accent{width:4px;flex-shrink:0}
+.entry-body{padding:12px 14px;flex:1}
+.entry-top{display:flex;justify-content:space-between;align-items:center}
+.entry-bp{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--text)}
+.entry-slash{color:var(--border);margin:0 2px}
+.entry-cat{font-size:11px;font-weight:500;letter-spacing:.5px}
+.dt-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.date-badge{background:#0f2040;color:#60a5fa;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:500}
+.time-badge{background:#0f2410;color:#4ade80;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:500}
+.entry-meta{font-size:10px;color:var(--muted);margin-top:4px}
+.entry-note{font-size:11px;color:var(--muted);font-style:italic;margin-top:5px}
+.empty{text-align:center;padding:48px 20px;color:var(--muted);font-size:13px}
+.footer{text-align:center;font-size:10px;color:var(--border);margin-top:20px;letter-spacing:.5px}
+.setup-screen{padding:24px 0}
+.setup-title{font-family:var(--serif);font-size:20px;margin-bottom:8px}
+.setup-desc{font-size:12px;color:var(--subtle);line-height:1.7;margin-bottom:20px}
+.setup-steps{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px}
+.setup-step{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start}
+.step-num{background:var(--red);color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:1px}
+.step-text{font-size:12px;color:var(--subtle);line-height:1.6}
+.step-text a{color:#60a5fa}
+.key-input{background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:12px;padding:12px 14px;outline:none;width:100%;margin-bottom:12px;transition:border-color .2s}
+.key-input:focus{border-color:var(--red)}
+.key-note{font-size:10px;color:var(--muted);line-height:1.6;margin-top:8px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="hdr">
+  <div class="hdr-icon">♥</div>
+  <div><div class="hdr-title">BP Tracker</div><div class="hdr-sub">Blood Pressure Log</div></div>
+</div>
+<div id="setup-screen" class="setup-screen hidden">
+  <p class="setup-title">One-time Setup</p>
+  <p class="setup-desc">This app needs an Anthropic API key to read BP values from photos and save to Google Sheets. Your key is stored only on this device.</p>
+  <div class="setup-steps">
+    <div class="setup-step"><div class="step-num">1</div><div class="step-text">Go to <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> and sign up / log in</div></div>
+    <div class="setup-step"><div class="step-num">2</div><div class="step-text">Click <strong>API Keys</strong> → <strong>Create Key</strong> → copy it</div></div>
+    <div class="setup-step"><div class="step-num">3</div><div class="step-text">Paste it below and tap Save</div></div>
+  </div>
+  <input class="key-input" id="api-key-input" type="password" placeholder="sk-ant-api03-…" autocomplete="off" spellcheck="false"/>
+  <button class="save-btn" onclick="saveApiKey()">Save API Key & Continue</button>
+  <p class="key-note">⚠ Keep your API key private. Never share it.</p>
+</div>
+<div id="main-app" class="hidden">
+  <div class="status info" id="status-bar">⏳ Connecting to Google Sheets…</div>
+  <div class="tabs">
+    <button class="tab on" id="tab-log" onclick="switchTab('log')">📋 Log BP</button>
+    <button class="tab" id="tab-history" onclick="switchTab('history')">📈 History</button>
+  </div>
+  <div id="view-log">
+    <div class="card">
+      <div class="card-title">📷 Scan BP Monitor Photo</div>
+      <div class="photo-row">
+        <label class="photo-label">
+          <input type="file" accept="image/*" capture="environment" onchange="handlePhoto(this)"/>
+          <span class="photo-icon">📷</span><span class="photo-text">CAMERA</span>
+        </label>
+        <label class="photo-label">
+          <input type="file" accept="image/*" onchange="handlePhoto(this)"/>
+          <span class="photo-icon">🖼️</span><span class="photo-text">GALLERY</span>
+        </label>
+      </div>
+      <div id="preview-wrap" class="preview-wrap hidden">
+        <img id="preview-img" class="preview-img" src="" alt="BP monitor"/>
+        <div id="scan-overlay" class="scan-overlay hidden"><div class="spinner"></div><div class="scan-text">Reading values…</div></div>
+        <div id="conf-badge" class="conf-badge hidden"></div>
+      </div>
+      <div id="scan-msg" class="scan-msg hidden"></div>
+    </div>
+    <div class="divider"><span>or enter manually</span></div>
+    <div class="bp-display">
+      <div class="bp-num"><span class="bp-val placeholder" id="disp-sys">---</span><span class="bp-unit">SYS</span></div>
+      <span class="bp-slash">/</span>
+      <div class="bp-num"><span class="bp-val placeholder" id="disp-dia">---</span><span class="bp-unit">DIA</span></div>
+    </div>
+    <div class="cat-badge" id="cat-badge"></div>
+    <div class="row3" style="margin-bottom:12px">
+      <div class="ig"><label class="lbl">Systolic</label><input class="num-input" id="inp-sys" type="number" placeholder="120" inputmode="numeric" oninput="updateDisplay()"/></div>
+      <div class="ig"><label class="lbl">Diastolic</label><input class="num-input" id="inp-dia" type="number" placeholder="80" inputmode="numeric" oninput="updateDisplay()"/></div>
+      <div class="ig"><label class="lbl">Pulse</label><input class="num-input" id="inp-pul" type="number" placeholder="72" inputmode="numeric"/></div>
+    </div>
+    <div class="row2" style="margin-bottom:12px">
+      <div class="ig"><label class="lbl">📅 Date</label><input class="dt-input" id="inp-date" type="date"/></div>
+      <div class="ig"><label class="lbl">⏰ Time</label><input class="dt-input" id="inp-time" type="time"/></div>
+    </div>
+    <textarea class="textarea" id="inp-note" rows="2" placeholder="Note (optional)" style="margin-bottom:12px"></textarea>
+    <button class="save-btn" id="save-btn" onclick="handleSave()" style="margin-bottom:16px">💾 Save to Google Sheets</button>
+    <div class="ref-box">
+      <div class="ref-title">Reference Ranges (mmHg)</div>
+      <div class="ref-row"><span class="ref-dot" style="background:#22c55e"></span><span class="ref-label">Normal</span><span class="ref-range">&lt; 120/80</span></div>
+      <div class="ref-row"><span class="ref-dot" style="background:#eab308"></span><span class="ref-label">Elevated</span><span class="ref-range">120–129/&lt;80</span></div>
+      <div class="ref-row"><span class="ref-dot" style="background:#f97316"></span><span class="ref-label">Stage 1</span><span class="ref-range">130–139/80–89</span></div>
+      <div class="ref-row"><span class="ref-dot" style="background:#ef4444"></span><span class="ref-label">Stage 2</span><span class="ref-range">≥140/≥90</span></div>
+    </div>
+  </div>
+  <div id="view-history" class="hidden">
+    <div class="stats-row" id="stats-row" style="display:none">
+      <div class="stat-box"><span class="stat-val" id="avg-val">--/--</span><span class="stat-lbl">7-day avg</span></div>
+      <div class="stat-box" id="latest-box"><span class="stat-val" id="latest-val">--/--</span><span class="stat-lbl">Latest</span></div>
+    </div>
+    <div id="entry-list" class="entry-list"></div>
+  </div>
+</div>
+<div class="footer">Blood Pressure Log · Google Drive</div>
+</div>
+<script>
+const SHEET_NAME="Blood Pressure Log";
+let API_KEY="",sheetId=localStorage.getItem("bp_sheet_id")||"",entries=[],currentPhotoFile=null;
+function nowDate(){return new Date().toLocaleDateString("en-CA")}
+function nowTime(){return new Date().toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",hour12:false})}
+function bpCategory(s,d){if(s<120&&d<80)return{label:"Normal",color:"#22c55e"};if(s<130&&d<80)return{label:"Elevated",color:"#eab308"};if(s<140||d<90)return{label:"High Stage 1",color:"#f97316"};return{label:"High Stage 2",color:"#ef4444"}}
+function extractExifDate(ab){try{const str=new TextDecoder("ascii",{fatal:false}).decode(new Uint8Array(ab).slice(0,65536));const m=str.match(/(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2})/);if(m)return{date:`${m[1]}-${m[2]}-${m[3]}`,time:`${m[4]}:${m[5]}`}}catch(_){}return null}
+function fileToBase64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=rej;r.readAsDataURL(file)})}
+function setStatus(msg,type="info"){const el=document.getElementById("status-bar");el.className=`status ${type}`;if(type==="error"){el.innerHTML=msg+' <button class="retry-btn" onclick="initSheet()">Retry</button>'}else{el.textContent=msg}}
+function displayDate(d){if(!d)return"";const[y,m,day]=d.split("-");return new Date(+y,+m-1,+day).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}
+function saveApiKey(){const k=document.getElementById("api-key-input").value.trim();if(!k.startsWith("sk-")){alert("Invalid key — should start with sk-");return}API_KEY=k;localStorage.setItem("bp_api_key",k);document.getElementById("setup-screen").classList.add("hidden");document.getElementById("main-app").classList.remove("hidden");initApp()}
+async function callClaude(messages,system,useMcp=false){const body={model:"claude-sonnet-4-20250514",max_tokens:1000,system,messages};if(useMcp)body.mcp_servers=[{type:"url",url:"https://drivemcp.googleapis.com/mcp/v1",name:"google-drive"}];const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify(body)});if(!res.ok){const e=await res.text();throw new Error(e)}return res.json()}
+async function initSheet(){setStatus("⏳ Connecting to Google Sheets…","info");try{const data=await callClaude([{role:"user",content:`Find Google Spreadsheet named exactly "${SHEET_NAME}". If exists return its ID and all rows. If NOT exists, create it with headers: Date,Time,Systolic,Diastolic,Pulse,Note,Category — return new ID. Respond ONLY JSON: {"spreadsheetId":"...","rows":[[...]]}`}],"You are a Google Drive assistant. Always respond pure JSON.",true);const text=data.content.filter(b=>b.type==="text").map(b=>b.text).join("");const parsed=JSON.parse(text.replace(/```json|```/g,"").trim());sheetId=parsed.spreadsheetId;localStorage.setItem("bp_sheet_id",sheetId);const rows=(parsed.rows||[]).slice(1).reverse();entries=rows.filter(r=>r.length>=4&&r[0]).map((r,i)=>{let date,time,si,di,pi,ni;if(r.length>=7){date=r[0];time=r[1];si=2;di=3;pi=4;ni=5}else{const dt=new Date(r[0]);date=dt.toLocaleDateString("en-CA");time=dt.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",hour12:false});si=1;di=2;pi=3;ni=4}return{id:i,date,time,sys:+r[si],dia:+r[di],pul:r[pi]||"",note:r[ni]||"",cat:bpCategory(+r[si],+r[di])}});renderHistory();setStatus("✓ Connected to Google Sheets","ok")}catch(e){setStatus("⚠ Could not connect to Google Drive","error")}}
+function switchTab(t){document.getElementById("view-log").classList.toggle("hidden",t!=="log");document.getElementById("view-history").classList.toggle("hidden",t!=="history");document.getElementById("tab-log").classList.toggle("on",t==="log");document.getElementById("tab-history").classList.toggle("on",t==="history")}
+function updateDisplay(){const s=parseInt(document.getElementById("inp-sys").value);const d=parseInt(document.getElementById("inp-dia").value);const ds=document.getElementById("disp-sys");const dd=document.getElementById("disp-dia");const cb=document.getElementById("cat-badge");ds.textContent=isNaN(s)?"---":s;dd.textContent=isNaN(d)?"---":d;ds.classList.toggle("placeholder",isNaN(s));dd.classList.toggle("placeholder",isNaN(d));if(!isNaN(s)&&!isNaN(d)){const cat=bpCategory(s,d);cb.textContent=cat.label;cb.style.cssText=`display:block;background:${cat.color}22;color:${cat.color};border:1px solid ${cat.color}44`}else{cb.style.display="none"}}
+async function handlePhoto(input){const file=input.files[0];if(!file)return;currentPhotoFile=file;const url=URL.createObjectURL(file);document.getElementById("preview-img").src=url;document.getElementById("preview-wrap").classList.remove("hidden");document.getElementById("conf-badge").classList.add("hidden");document.getElementById("scan-msg").classList.add("hidden");try{const ab=await file.arrayBuffer();const exif=extractExifDate(ab);document.getElementById("inp-date").value=exif?exif.date:nowDate();document.getElementById("inp-time").value=exif?exif.time:nowTime()}catch{document.getElementById("inp-date").value=nowDate();document.getElementById("inp-time").value=nowTime()}document.getElementById("scan-overlay").classList.remove("hidden");try{const b64=await fileToBase64(file);const data=await callClaude([{role:"user",content:[{type:"image",source:{type:"base64",media_type:file.type||"image/jpeg",data:b64}},{type:"text",text:'Extract BP values. Respond ONLY JSON: {"systolic":null,"diastolic":null,"pulse":null,"confidence":"high|medium|low"}'}]}],"Extract BP values from monitor photo. Respond pure JSON.",false);const text=data.content.filter(b=>b.type==="text").map(b=>b.text).join("");const result=JSON.parse(text.replace(/```json|```/g,"").trim());if(result.systolic){document.getElementById("inp-sys").value=result.systolic;document.getElementById("inp-dia").value=result.diastolic;if(result.pulse)document.getElementById("inp-pul").value=result.pulse;updateDisplay();const badge=document.getElementById("conf-badge");badge.textContent=(result.confidence==="high"?"✓ ":"~ ")+result.confidence;badge.style.background=result.confidence==="high"?"#166534":result.confidence==="medium"?"#92400e":"#7f1d1d";badge.classList.remove("hidden");showScanMsg(`✓ Read ${result.systolic}/${result.diastolic} · ${result.confidence} confidence`,"#4ade80")}else{showScanMsg("⚠ Couldn't read — enter manually","#fbbf24")}}catch(e){showScanMsg("⚠ Scan failed — enter manually","#f87171")}finally{document.getElementById("scan-overlay").classList.add("hidden")}input.value=""}
+function showScanMsg(txt,color){const el=document.getElementById("scan-msg");el.textContent=txt;el.style.color=color;el.classList.remove("hidden")}
+async function handleSave(){const sys=parseInt(document.getElementById("inp-sys").value);const dia=parseInt(document.getElementById("inp-dia").value);const pul=parseInt(document.getElementById("inp-pul").value)||"";const date=document.getElementById("inp-date").value||nowDate();const time=document.getElementById("inp-time").value||nowTime();const note=document.getElementById("inp-note").value.trim();if(!sys||!dia||sys<50||sys>250||dia<30||dia>150){setStatus("❌ Enter valid BP values","error");return}const cat=bpCategory(sys,dia);const btn=document.getElementById("save-btn");btn.disabled=true;btn.textContent="Saving…";setStatus("⏳ Saving…","info");try{await callClaude([{role:"user",content:`Append row to spreadsheet ID "${sheetId}": ["${date}","${time}","${sys}","${dia}","${pul}","${note.replace(/"/g,"'")}","${cat.label}"]. Confirm {"success":true}.`}],"You are a Google Drive assistant. Respond pure JSON.",true);entries.unshift({id:Date.now(),date,time,sys,dia,pul,note,cat});["inp-sys","inp-dia","inp-pul","inp-note"].forEach(id=>document.getElementById(id).value="");document.getElementById("inp-date").value=nowDate();document.getElementById("inp-time").value=nowTime();document.getElementById("preview-wrap").classList.add("hidden");document.getElementById("scan-msg").classList.add("hidden");document.getElementById("disp-sys").textContent="---";document.getElementById("disp-dia").textContent="---";document.getElementById("cat-badge").style.display="none";currentPhotoFile=null;renderHistory();setStatus(`✓ Saved! ${cat.label} · ${date} ${time}`,"ok");switchTab("history")}catch{setStatus("❌ Save failed. Try again.","error")}finally{btn.disabled=false;btn.textContent="💾 Save to Google Sheets"}}
+function renderHistory(){const list=document.getElementById("entry-list");if(entries.length===0){list.innerHTML='<div class="empty">No entries yet.<br>Log your first reading!</div>';document.getElementById("stats-row").style.display="none";return}const n7=Math.min(entries.length,7);const avgS=Math.round(entries.slice(0,7).reduce((a,e)=>a+e.sys,0)/n7);const avgD=Math.round(entries.slice(0,7).reduce((a,e)=>a+e.dia,0)/n7);document.getElementById("avg-val").textContent=`${avgS}/${avgD}`;const latest=entries[0];document.getElementById("latest-val").textContent=`${latest.sys}/${latest.dia}`;document.getElementById("latest-val").style.color=latest.cat.color;document.getElementById("latest-box").style.borderColor=latest.cat.color+"44";document.getElementById("stats-row").style.display="flex";list.innerHTML=entries.map(e=>`<div class="entry"><div class="entry-accent" style="background:${e.cat.color}"></div><div class="entry-body"><div class="entry-top"><span class="entry-bp">${e.sys}<span class="entry-slash">/</span>${e.dia}</span><span class="entry-cat" style="color:${e.cat.color}">${e.cat.label}</span></div><div class="dt-badges"><span class="date-badge">📅 ${displayDate(e.date)}</span><span class="time-badge">⏰ ${e.time}</span></div>${e.pul?`<div class="entry-meta">♥ ${e.pul} bpm</div>`:""}${e.note?`<p class="entry-note">"${e.note}"</p>`:""}</div></div>`).join("")}
+function initApp(){document.getElementById("inp-date").value=nowDate();document.getElementById("inp-time").value=nowTime();renderHistory();initSheet()}
+window.addEventListener("DOMContentLoaded",()=>{API_KEY=localStorage.getItem("bp_api_key")||"";if(!API_KEY){document.getElementById("setup-screen").classList.remove("hidden")}else{document.getElementById("main-app").classList.remove("hidden");initApp()}});
+</script>
+</body>
+</html>
